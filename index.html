@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Search</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    *
+    {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .header
+    {
+      padding: 40px;
+      background-color: rgb(235, 235, 201);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+    .header .search_el input,
+    button
+    {
+      padding: 10px 20px;
+      border: none;
+      outline: none;
+    }
+    button
+    {
+      cursor: pointer;
+    }
+    #gallery {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .image {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+      z-index: 1;
+    }
+
+    #overlay img {
+      max-width: 80%;
+      max-height: 80%;
+      border-radius: 8px;
+    }
+
+    #arrow-left,
+    #arrow-right,
+    .close {
+      position: absolute;
+      top: 10px;
+      font-size: 1.5em;
+      color: white;
+      cursor: pointer;
+    }
+
+    #arrow-left {
+      left: 10px;
+    }
+
+    #arrow-right {
+      right: 10px;
+    }
+
+    .close {
+      right: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Image Search</h1>
+
+    <div class="search_el">
+      <input type="text" id="searchInput" placeholder="Enter search term">
+      <button onclick="searchImages()">Search</button>
+    </div>
+  </div>
+
+  <div id="gallery"></div>
+
+  <div id="overlay">
+    <i id="arrow-left" class="fas fa-arrow-left" onclick="showPrevImage()"></i>
+    <img id="overlay-image" alt="Expanded Image">
+    <i id="arrow-right" class="fas fa-arrow-right" onclick="showNextImage()"></i>
+    <i class="fas fa-times close" onclick="closeOverlay()"></i>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+  <script>
+    let currentIndex = 0; // تعيين الصورة الحالية
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowRight') {
+        showNextImage();
+      } else if (event.key === 'ArrowLeft') {
+        showPrevImage();
+      }
+    });
+
+    async function searchImages() {
+      const searchTerm = document.getElementById('searchInput').value;
+
+      if (!searchTerm) {
+        alert('Please enter a search term.');
+        return;
+      }
+
+      const accessKey = 'UiKuWVGwvDL7sMM7ZptHvCY1pELBzp1SCxWyTpwfwB0'; // Replace with your Unsplash access key
+      const apiUrl = `https://api.unsplash.com/search/photos?query=${searchTerm}&client_id=${accessKey}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        displayImages(data.results);
+      } catch (error) {
+        console.error('Error fetching images:', error);
+      }
+    }
+
+    function displayImages(images) {
+      const gallery = document.getElementById('gallery');
+      gallery.innerHTML = '';
+
+      images.forEach((image, index) => {
+        const imgElement = document.createElement('img');
+        imgElement.src = image.urls.regular;
+        imgElement.alt = image.alt_description;
+        imgElement.classList.add('image');
+
+        imgElement.addEventListener('click', () => {
+          currentIndex = index;
+          openImage(image.urls.regular);
+        });
+
+        gallery.appendChild(imgElement);
+      });
+
+      showNavigationArrows(); // إظهار الأسهم عند عرض الصور
+    }
+
+    function openImage(imageUrl) {
+      const overlay = document.getElementById('overlay');
+      const overlayImage = document.getElementById('overlay-image');
+
+      overlayImage.src = imageUrl;
+      overlay.style.display = 'flex';
+
+      showNavigationArrows(); // إظهار الأسهم عند عرض الصورة المكبرة
+    }
+
+    function closeOverlay() {
+      const overlay = document.getElementById('overlay');
+      overlay.style.display = 'none';
+    }
+
+    function showNextImage() {
+      const images = document.querySelectorAll('.image');
+      currentIndex = (currentIndex + 1) % images.length;
+      openImage(images[currentIndex].src);
+    }
+
+    function showPrevImage() {
+      const images = document.querySelectorAll('.image');
+      currentIndex = (currentIndex - 1 + images.length) % images.length;
+      openImage(images[currentIndex].src);
+    }
+
+    function showNavigationArrows() {
+      const arrowLeft = document.getElementById('arrow-left');
+      const arrowRight = document.getElementById('arrow-right');
+
+      arrowLeft.style.display = currentIndex > 0 ? 'block' : 'none';
+      arrowRight.style.display = currentIndex < images.length - 1 ? 'block' : 'none';
+    }
+  </script>
+</body>
+
+</html>
